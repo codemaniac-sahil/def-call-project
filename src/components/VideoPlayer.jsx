@@ -8,13 +8,14 @@ import * as tf from '@tensorflow/tfjs'
 import {drawRect} from "../utilities"
 import {loadGraphModel} from '@tensorflow/tfjs-converter';
 import { useEffect } from 'react'
-// import Webcam from "react-webcam";
+
 tf.setBackend('webgl');
 
 const VideoPlayer = () => {
   const {name,callAccepted,myVideo,userVideo,callEnded,stream,call,canvasRef}=useContext(SocketContext)
 
   const runCoco=async ()=>{
+    // Loading the model from the model.json file
     const net =await loadGraphModel('https://def-call-server.onrender.com/model.json')
    
     setInterval(() => {
@@ -40,20 +41,22 @@ const detect=async (net)=>{
         canvasRef.current.width = videoWidth;
         canvasRef.current.height = videoHeight;
 
-        //make detection
-
+      
+      // Making detections
         const img = tf.browser.fromPixels(video)
         const resized = tf.image.resizeBilinear(img, [640,480])
         const casted = resized.cast('int32')
         const expanded = casted.expandDims(0)
         const obj = await net.executeAsync(expanded)
       
-        
+        // Gettig the boxes, classes and scores from the model
         
         const boxes =  obj[5].arraySync()
         const classes =  obj[6].dataSync()
         const scores =  obj[0].arraySync()
         const ctx = canvasRef.current.getContext("2d");
+
+        // Drawing the detections onto the canvas
         
         window.requestAnimationFrame(()=>{
             drawRect(boxes[0], classes, scores[0], 0.8, videoWidth, videoHeight,ctx)
